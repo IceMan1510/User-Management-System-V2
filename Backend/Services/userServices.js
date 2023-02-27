@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const Pool = require("../Config/db");
+
 exports.getAllUsersService = async (page) => {
   const limit = 8;
   const offset = (page - 1) * limit;
@@ -64,17 +65,29 @@ exports.updateUserService = async (id, body) => {
   if (userExists.rowCount === 0) {
     return false;
   } else {
-    const updateUser = await Pool.query(`
+    const client = await Pool.connect();
+
+    try {
+      await client.query("BEGIN");
+      const updateUser = await client.query(`
       update ums.users set f_name='${f_name}', m_name='${m_name}', l_name='${l_name}', email='${email}',contact='${contact}', password='${password}', date_of_birth='${date_of_birth}', gender='${gender}' where u_id=${id}`);
-    const updateAddress = await Pool.query(
-      `update ums.addresses set address_line1='${address_line1}', address_line2='${address_line2}', landmark='${landmark}', zip_code='${zip_code}' where add_id=${add_id}`
-    );
-    const updateCity = await Pool.query(
-      `update ums.cities set city_name='${city_name}', state_id='${mapState(
-        state_name
-      )}' where city_id=${city_id} `
-    );
-    return true;
+      const updateAddress = await client.query(
+        `update ums.addresses set address_line1='${address_line1}', address_line2='${address_line2}', landmark='${landmark}', zip_code='${zip_code}' where add_id=${add_id}`
+      );
+      const updateCity = await client.query(
+        `update ums.cities set city_name='${city_name}', state_id='${mapState(
+          state_name
+        )}' where city_id=${city_id} `
+      );
+
+      await client.query("COMMIT");
+      return true;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.log(error);
+    } finally {
+      client.release();
+    }
   }
 };
 exports.createUserService = async (user) => {
@@ -87,24 +100,34 @@ exports.createUserService = async (user) => {
   if (isUnique.rowCount !== 0) {
     return { success: false, body: `Email already exists` };
   } else {
-    const insertUser =
-      await Pool.query(`INSERT INTO ums.users (f_name, m_name, l_name, email, contact, password, date_of_birth, gender)
+    const client = await Pool.connect();
+    try {
+      await client.query("BEGIN");
+      const insertUser =
+        await client.query(`INSERT INTO ums.users (f_name, m_name, l_name, email, contact, password, date_of_birth, gender)
    VALUES 
    ('${user.f_name}', '${user.m_name}', '${user.l_name}', '${user.email}', '${user.contact}', '${user.password}', '${user.date_of_birth}', '${user.gender}') returning u_id`);
-    const u_id = insertUser.rows[0].u_id;
-    const state_id = mapState(user.state_name);
-    const insertCity = await Pool.query(
-      `INSERT INTO ums.cities (city_name, state_id) VALUES ('${user.city_name}', ${state_id}) returning city_id`
-    );
-    const city_id = insertCity.rows[0].city_id;
-    const insertAddresses =
-      await Pool.query(`INSERT INTO ums.addresses (u_id, address_line1, address_line2, landmark,zip_code, city_id)
+      const u_id = insertUser.rows[0].u_id;
+      const state_id = mapState(user.state_name);
+      const insertCity = await client.query(
+        `INSERT INTO ums.cities (city_name, state_id) VALUES ('${user.city_name}', ${state_id}) returning city_id`
+      );
+      const city_id = insertCity.rows[0].city_id;
+      const insertAddresses =
+        await client.query(`INSERT INTO ums.addresses (u_id, address_line1, address_line2, landmark,zip_code, city_id)
   VALUES 
   (${u_id}, '${user.address_line1}', '${user.address_line2}', '${user.landmark}','${user.zip_code}', ${city_id});`);
-    return {
-      success: true,
-      body: `Thank You For Registrations ${user.f_name}`,
-    };
+      await client.query("COMMIT");
+      return {
+        success: true,
+        body: `Thank You For Registrations ${user.f_name}`,
+      };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.log(error);
+    } finally {
+      client.release();
+    }
   }
 };
 

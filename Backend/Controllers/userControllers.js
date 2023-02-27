@@ -139,6 +139,7 @@ exports.deleteUser = async (req, res) => {
       res.status(404).send({ error: `No user found with ID ${id}` });
     }
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
