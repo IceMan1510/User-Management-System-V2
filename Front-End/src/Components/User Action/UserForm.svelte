@@ -92,8 +92,18 @@
       state_name: "Select State",
     };
   } else {
+    console.log(dataToBeUpdated);
+    const inputDate = dataToBeUpdated.date_of_birth;
+    const dateObj = new Date(inputDate);
+    const year = dateObj.getFullYear();
+    const month = (dateObj.getMonth() + 1).toString().padStart(2, "0");
+    const day = dateObj.getDate().toString().padStart(2, "0");
+    dataToBeUpdated.date_of_birth = `${year}-${month}-${day}`;
     userDetail = {
       id: dataToBeUpdated.u_id,
+      city_id: dataToBeUpdated.city_id,
+      add_id: dataToBeUpdated.add_id,
+      state_id: dataToBeUpdated.state_id,
       f_name: dataToBeUpdated.f_name,
       m_name: dataToBeUpdated.m_name,
       l_name: dataToBeUpdated.l_name,
@@ -109,6 +119,7 @@
       city_name: dataToBeUpdated.city_name,
       zip_code: dataToBeUpdated.zip_code,
       state_name: dataToBeUpdated.state_name,
+      passForVerification: dataToBeUpdated.password,
     };
   }
   const handlePost = () => {
@@ -151,37 +162,30 @@
               <input
                 type="text"
                 name="LastName"
-                title="Enter a valid middle name"
+                title="Enter a valid mid name"
                 bind:value={userDetail.m_name}
                 placeholder="Middle Name"
                 class={firstLoad && !validation(userDetail.m_name)
                   ? "form-control is-invalid"
                   : "form-control"}
               />
-              <div class="invalid-feedback">
-                Please enter a valid middle name
-              </div>
+              <div class="invalid-feedback">Please enter a valid mid name</div>
             </div>
             <div class="col">
-              <label for="validationCustomUsername"
-                >Last Name<span class="text-danger"> *</span></label
+              <label for="validationCustom02"
+                >Last name<span class="text-danger"> *</span></label
               >
-              <div class="input-group">
-                <div class="input-group-prepend" />
-                <input
-                  type="text"
-                  name="firstName"
-                  title="Enter a valid last name"
-                  bind:value={userDetail.l_name}
-                  placeholder="Last Name"
-                  class={firstLoad && !validation(userDetail.l_name)
-                    ? "form-control is-invalid"
-                    : "form-control"}
-                />
-                <div class="invalid-feedback">
-                  Please enter a valid last name
-                </div>
-              </div>
+              <input
+                type="text"
+                name="LastName"
+                title="Enter a valid last name"
+                bind:value={userDetail.l_name}
+                placeholder="Last Name"
+                class={firstLoad && !validation(userDetail.l_name)
+                  ? "form-control is-invalid"
+                  : "form-control"}
+              />
+              <div class="invalid-feedback">Please enter a valid Last</div>
             </div>
           </div>
 
@@ -192,7 +196,6 @@
               >
               <input
                 type="text"
-                required
                 name="email"
                 bind:value={userDetail.email}
                 title="Enter a unique and valid email id"
@@ -211,7 +214,7 @@
                 type="Contact"
                 name="Contact"
                 maxlength="10"
-                title="Enter a password"
+                title="Enter a Contact"
                 class={firstLoad && !validateContactNumber(userDetail.contact)
                   ? "form-control is-invalid"
                   : "form-control"}
@@ -232,7 +235,6 @@
               >
               <input
                 type="Password"
-                required
                 name="password"
                 title="Password should be greater than 8 digits"
                 bind:value={userDetail.password}
@@ -242,8 +244,9 @@
                   : "form-control"}
               />
               <div class="invalid-feedback">
-                Password should be greater than 8 digits and at must contain 1
-                number, 1 special character, 1 upper and 1 lower case letter.
+                {dataToBeUpdated === undefined || dataToBeUpdated === ""
+                  ? "Password should be greater than 8 digits and at must contain 1 number, 1 special character, 1 upper and 1 lower case letter."
+                  : "Old Password Doesn't Match"}
               </div>
             </div>
             <div class="form-group col-md-6">
@@ -254,7 +257,6 @@
               >
               <input
                 type="Password"
-                required
                 name="password"
                 title="Confirm Password should match password "
                 class={firstLoad &&
@@ -265,7 +267,9 @@
                 placeholder="Password"
               />
               <div class="invalid-feedback">
-                Password and Confirm Password should match
+                {dataToBeUpdated === undefined || dataToBeUpdated === ""
+                  ? "Password and Confirm Password should match"
+                  : "Password should be greater than 8 digits and at must contain 1 number, 1 special character, 1 upper and 1 lower case letter."}
               </div>
             </div>
           </div>
@@ -285,7 +289,6 @@
                 onfocus="(this.type='date')"
                 min="1990-01-01"
                 max="2005-12-31"
-                required
               />
               <div class="invalid-feedback">Please enter a valid date</div>
             </div>
@@ -299,14 +302,12 @@
                 name="Gender"
                 value="Male"
                 bind:group={userDetail.gender}
-                required
               />Male &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
               <input
                 type="radio"
                 name="Gender"
                 value="Female"
                 bind:group={userDetail.gender}
-                required
               />
               Female &nbsp; &nbsp; &nbsp; &nbsp;
               <input
@@ -314,7 +315,6 @@
                 name="Gender"
                 value="Other"
                 bind:group={userDetail.gender}
-                required
               />
               Other
               <div
@@ -341,7 +341,6 @@
                 bind:value={userDetail.address_line1}
                 placeholder="Building/Apartment"
                 autofocus="on"
-                required
               />
               <div class="invalid-feedback">Please enter a valid address</div>
             </div>
@@ -358,29 +357,25 @@
                 class={firstLoad && userDetail.address_line2.trim() === ""
                   ? "form-control is-invalid"
                   : "form-control"}
-                required
               />
               <div class="invalid-feedback">Please enter a valid data</div>
             </div>
             <div class="col-md-4 mb-3">
-              <label for="validationCustomUsername"
+              <label for="validationCustom02"
                 >Landmark<span class="text-danger"> *</span></label
               >
-              <div class="input-group">
-                <div class="input-group-prepend" />
-                <input
-                  type="text"
-                  name="firstName"
-                  title="Enter landmark"
-                  bind:value={userDetail.landmark}
-                  placeholder="Landmark"
-                  class={firstLoad && userDetail.landmark.trim() === ""
-                    ? "form-control is-invalid"
-                    : "form-control"}
-                  required
-                />
-                <div class="invalid-feedback">Please enter a valid data</div>
-              </div>
+
+              <input
+                type="text"
+                name="firstName"
+                title="Enter landmark"
+                bind:value={userDetail.landmark}
+                placeholder="Landmark"
+                class={firstLoad && userDetail.landmark.trim() === ""
+                  ? "form-control is-invalid"
+                  : "form-control"}
+              />
+              <div class="invalid-feedback">Please enter a valid data</div>
             </div>
           </div>
 
@@ -392,7 +387,6 @@
               <input
                 title="Enter your City"
                 type="Location"
-                required
                 name="Location"
                 bind:value={userDetail.city_name}
                 placeholder="City"
@@ -471,7 +465,6 @@
                   ? "form-control is-invalid"
                   : "form-control"}
                 placeholder="Pin Code"
-                pattern="[0-9]{4}"
                 maxlength="6"
                 bind:value={userDetail.zip_code}
               />
@@ -481,7 +474,7 @@
           <div class="form-group text-center">
             <button
               class="btn btn-primary text-center"
-              on:click={() => {
+              on:click|preventDefault={() => {
                 handleButton(dataToBeUpdated);
               }}>Register</button
             >
@@ -493,6 +486,9 @@
 </main>
 
 <style>
+  .invalid-feedback {
+    margin-top: -10px;
+  }
   label {
     color: #212529;
   }

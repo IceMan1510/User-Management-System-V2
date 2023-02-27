@@ -61,6 +61,8 @@
 
 {#if loading}
   <span><Loader /></span>
+{:else if userData.length === 0}
+  <h1 class="text-center">Data Not Found</h1>
 {:else}
   <body>
     <div class="table-wrapper">

@@ -1,15 +1,18 @@
+const Pool = require("../Config/db");
+const bcrypt = require("bcrypt");
 const validator = require("validator");
 const {
   getAllUsersService,
   getSingleUserService,
   deleteUserService,
   updateUserService,
+  createUserService,
 } = require("../Services/userServices");
 
 let checkPwd = (str) => {
   if (
     str.length < 8 ||
-    str.length > 500 ||
+    str.length > 255 ||
     str.search(/\d/) == -1 ||
     str.search(/[a-zA-Z]/) == -1 ||
     str.search(/[^a-zA-Z0-9\!\@\#\$\%\^\&\*\(\)\_\+\.\,\;\:]/) != -1
@@ -49,24 +52,24 @@ var checkDate = (date) => {
 };
 var allValidForUpdate = (user) => {
   if (
-    user.fName.trim() === "" ||
-    !validator.isAlpha(user.lName) ||
-    !validator.isAlpha(user.mName) ||
-    user.lName.trim() === "" ||
+    user.f_name.trim() === "" ||
+    !validator.isAlpha(user.l_name) ||
+    !validator.isAlpha(user.m_name) ||
+    user.l_name.trim() === "" ||
     !validator.isEmail(user.email) ||
-    !validator.isAlpha(user.fName) ||
+    !validator.isAlpha(user.f_name) ||
     user.contact.trim() === "" ||
     user.contact.trim().length !== 10 ||
-    user.address.trim() === "" ||
-    user.dob.trim() === "" ||
+    user.address_line1.trim() === "" ||
+    user.date_of_birth.trim() === "" ||
     user.contact.trim() === "" ||
-    !checkDate(user.dob) ||
+    !checkDate(user.date_of_birth) ||
     !validateContactNumber(user.contact) ||
-    !isZipNumber(user.pinCode) ||
-    user.address.trim() === "" ||
-    user.address1.trim() === "" ||
-    user.state === "Select State" ||
-    user.city.trim() === "" ||
+    !isZipNumber(user.zip_code) ||
+    user.address_line1.trim() === "" ||
+    user.address_line2.trim() === "" ||
+    user.state_name === "Select State" ||
+    user.city_name.trim() === "" ||
     user.landmark.trim() === ""
   ) {
     return true;
@@ -76,26 +79,26 @@ var allValidForUpdate = (user) => {
 };
 var allValid = (user) => {
   if (
-    user.fName.trim() === "" ||
-    !validator.isAlpha(user.lName) ||
-    !validator.isAlpha(user.mName) ||
-    user.lName.trim() === "" ||
+    user.f_name.trim() === "" ||
+    !validator.isAlpha(user.l_name) ||
+    !validator.isAlpha(user.m_name) ||
+    user.l_name.trim() === "" ||
     !validator.isEmail(user.email) ||
-    !validator.isAlpha(user.fName) ||
+    !validator.isAlpha(user.f_name) ||
     user.contact.trim() === "" ||
     user.contact.trim().length !== 10 ||
     user.password.trim() === "" ||
-    user.address.trim() === "" ||
-    user.dob.trim() === "" ||
+    user.address_line1.trim() === "" ||
+    user.date_of_birth.trim() === "" ||
     user.contact.trim() === "" ||
     !checkPwd(user.password) ||
-    !checkDate(user.dob) ||
+    !checkDate(user.date_of_birth) ||
     !validateContactNumber(user.contact) ||
-    !isZipNumber(user.pinCode) ||
-    user.address.trim() === "" ||
-    user.address1.trim() === "" ||
-    user.state === "Select State" ||
-    user.city.trim() === "" ||
+    !isZipNumber(user.zip_code) ||
+    user.address_line1.trim() === "" ||
+    user.address_line2.trim() === "" ||
+    user.state_name === "Select State" ||
+    user.city_name.trim() === "" ||
     user.landmark.trim() === ""
   ) {
     return true;
@@ -143,14 +146,65 @@ exports.deleteUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const body = req.body;
+    console.log(body);
     const id = req.params.id;
-    const result = await updateUserService(id, body);
-    if (!result) {
-      return res.status(404).send({ error: `No user found with ID ${id}` });
+    if (allValidForUpdate(body)) {
+      return res.status(404).send(`Enter valid data`);
+    } else if (body.password === "" && body.confirmPassword === "") {
+      body.password = body.passForVerification;
+      const result = await updateUserService(id, body);
+      if (!result) {
+        return res.status(404).send(`No user found with ID ${id}`);
+      } else {
+        return res.send(`User with ID ${id} updated successfully`);
+      }
+    } else if (!bcrypt.compareSync(body.password, body.passForVerification)) {
+      return res.status(400).send(`Old Password Doesn't Match`);
+    } else if (!checkPwd(body.confirmPassword)) {
+      return res.status(400).send(`New Password Doesn't Match The Parameter`);
     } else {
-      return res.send({ message: `User with ID ${id} updated successfully` });
+      const hash = bcrypt.hashSync(body.confirmPassword, 10);
+      body.password = hash;
+      const result = await updateUserService(id, body);
+      if (!result) {
+        return res.status(404).send(`No user found with ID ${id}`);
+      } else {
+        return res.send(`User with ID ${id} updated successfully`);
+      }
     }
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+exports.addUser = async (req, res) => {
+  try {
+    const user = req.body;
+
+    if (allValid(user)) {
+      res.status(400).send("Please enter appropriate data");
+    } else {
+      var serviceResponse = await createUserService(user);
+      if (serviceResponse.success === false) {
+        res.status(400).send(serviceResponse.body);
+      } else {
+        res.status(200).send(serviceResponse.body);
+      }
+    }
+
+    // var serviceResponse = await createUserService(user);
+    // const user = req.body;
+    // if (allValid(user)) {
+    //   res.status(400).send("Please enter appropriate data");
+    // } else {
+    //   var serviceResponse = await createUserService(user);
+    // if (serviceResponse.success === false) {
+    //   res.status(400).send(serviceResponse.body);
+    // }
+    // res.status(200).send(serviceResponse.body);
+    // }
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Internal Server Error");
   }
 };

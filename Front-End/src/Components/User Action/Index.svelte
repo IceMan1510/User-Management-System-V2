@@ -20,11 +20,9 @@
   $: buttonStatusOnEvent = (event) => {
     if (event.detail.block === "userForm") {
       block = "userForm";
-      console.log(block);
     } else if (event.detail.block === "dashboard") {
       page = 1;
       block = "dashboard";
-      console.log(block);
     } else if (event.detail.block === "searchField") {
       block = "searchField";
       searchData = event.detail.data;
@@ -40,7 +38,6 @@
     } else if (e.detail.message === "prev" && page > 1 && page <= totalPages) {
       page--;
       fetchData();
-      console.log("prev pressed");
     } else if (e.detail > 0 && e.detail <= totalPages) {
       page = e.detail;
       fetchData();
@@ -55,8 +52,9 @@
         method: "GET",
       });
       let response = await res.json();
-      console.log(response.data);
+
       userData = response.data;
+      console.log(userData);
       totalPages = response.totalPages; // Total number of pages (totalrecord/8)
       totalRecords = response.totalRecords; //Total record in the db
       totalRecordPerPage = userData.length; //Records per page
@@ -75,7 +73,6 @@
         method: "DELETE",
       });
       const response = await res.text();
-      console.log(response);
 
       var delId = "";
       for (let i = 0; i < userData.length; i++) {
@@ -99,26 +96,24 @@
     try {
       block = "updateUser";
       dataToBeUpdated = e.detail;
-      console.log(dataToBeUpdated);
     } catch (error) {
       console.log(error);
     }
   };
   var updatingTheData = async (e) => {
+    var updatedData = e.detail;
     try {
-      let updatedData = e.detail;
-      console.log(updatedData);
       if (
-        updatedData.fName.trim() === "" ||
-        updatedData.mName.trim() === "" ||
-        updatedData.lName.trim() === ""
+        updatedData.f_name.trim() === "" ||
+        updatedData.m_name.trim() === "" ||
+        updatedData.l_name.trim() === ""
       ) {
         toast.error(`Name fields cannot be blank`, {
           position: "bottom-center",
         });
       } else {
         const res = await fetch(
-          "http://localhost:4000/user/" + updatedData.u_id,
+          "http://localhost:4000/user/" + updatedData.id,
           {
             method: "PATCH",
             headers: {
@@ -140,16 +135,19 @@
               city_name: dataToBeUpdated.city_name,
               zip_code: updatedData.zip_code,
               state_name: updatedData.state_name,
+              passForVerification: updatedData.passForVerification,
+              city_id: updatedData.city_id,
+              add_id: updatedData.add_id,
+              state_id: updatedData.state_id,
             }),
           }
         );
         const response = await res;
-        console.log(response.status);
         var resText = await response.text();
+        console.log(resText);
         if (response.status === 200) {
           block = "dashboard";
-          console.log(toast);
-          toast.success(`Data Updated For ${updatedData.fName}`, {
+          toast.success(`Data Updated For ${updatedData.f_name}`, {
             position: "bottom-center",
           });
           await fetchData();
@@ -166,21 +164,21 @@
   const getSingleId = async (email) => {
     try {
       const url = `http://localhost:4000/user/${email}`;
-      console.log(url);
+
       const res = await fetch(url, {
         method: "GET",
       });
       let response = await res.json();
+      console.log(response);
       // foundSearchData = foundSearchData.push(response);
+      foundSearchData = [];
       for (let index = 0; index < response.length; index++) {
         foundSearchData[index] = response[index];
       }
 
-      console.log(foundSearchData);
       totalPages = 1; // Total number of pages (totalrecord/8)
       totalRecords = response.length; //Total record in the db
       totalRecordPerPage = response.length; //Records per page
-      console.log();
     } catch (error) {
       console.log(error.text);
       toast.error(`Data Not Found`, {
@@ -189,43 +187,37 @@
       block = "dashboard";
     }
   };
-
   const doPost = async (e) => {
-    // console.log(e.detail);
     try {
       let dataToBeAdded = e.detail;
-      console.log(dataToBeAdded);
       if (dataToBeAdded.confirmPassword !== dataToBeAdded.password) {
         dataToBeAdded.password = "";
       }
-
       const res = await fetch("http://localhost:4000/user/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          fName: dataToBeAdded.fName,
-          mName: dataToBeAdded.mName,
-          lName: dataToBeAdded.lName,
-          gender: dataToBeAdded.gender,
-          dob: dataToBeAdded.dob,
+          f_name: dataToBeAdded.f_name,
+          m_name: dataToBeAdded.m_name,
+          l_name: dataToBeAdded.l_name,
           email: dataToBeAdded.email,
-          password: dataToBeAdded.password,
           contact: dataToBeAdded.contact,
-          address: dataToBeAdded.address,
-          address1: dataToBeAdded.address1,
+          password: dataToBeAdded.password,
+          date_of_birth: dataToBeAdded.date_of_birth,
+          gender: dataToBeAdded.gender,
+          address_line1: dataToBeAdded.address_line1,
+          address_line2: dataToBeAdded.address_line2,
           landmark: dataToBeAdded.landmark,
-          city: dataToBeAdded.city,
-          state: dataToBeAdded.state,
-          pinCode: dataToBeAdded.pinCode,
+          city_name: dataToBeAdded.city_name,
+          zip_code: dataToBeAdded.zip_code,
+          state_name: dataToBeAdded.state_name,
         }),
       });
-
       const response = await res.text();
       const status = await res.status;
-      console.log(response);
-      console.log(status);
+
       if (status === 200) {
         block = "dashboard";
         toast.success(`${response}`, {
