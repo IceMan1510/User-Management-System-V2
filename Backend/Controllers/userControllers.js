@@ -23,7 +23,7 @@ let checkPwd = (str) => {
   }
 };
 var validateContactNumber = (input) => {
-  const regex = /^\d{10}$/; // regex pattern to match exactly 10 digits
+  const regex = /^\d{10}$/;
   return regex.test(input);
 };
 var isZipNumber = (zip) => {
@@ -192,18 +192,6 @@ exports.addUser = async (req, res) => {
         res.status(200).send(serviceResponse.body);
       }
     }
-
-    // var serviceResponse = await createUserService(user);
-    // const user = req.body;
-    // if (allValid(user)) {
-    //   res.status(400).send("Please enter appropriate data");
-    // } else {
-    //   var serviceResponse = await createUserService(user);
-    // if (serviceResponse.success === false) {
-    //   res.status(400).send(serviceResponse.body);
-    // }
-    // res.status(200).send(serviceResponse.body);
-    // }
   } catch (error) {
     console.log(error);
     res.status(500).send("Internal Server Error");
